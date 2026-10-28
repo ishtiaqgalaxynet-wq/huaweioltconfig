@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GALAXYNET · ONT Generator</title>
+<style>
+:root{color-scheme:dark;--tx:#f2f4f8;--lb:#c9cedd;--mut:#8b92a5;--bd:rgba(255,255,255,.09);--ac:#8b7bff;--ac2:#38bdf8;--ok:#34d399;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:#05060a}
+body{margin:0;min-height:100vh;color:var(--tx);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:30px 16px 40px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:-25%;z-index:-2;background:radial-gradient(620px 420px at 15% 5%,rgba(139,123,255,.32),transparent 62%),radial-gradient(520px 420px at 88% 22%,rgba(56,189,248,.22),transparent 62%),radial-gradient(560px 460px at 50% 95%,rgba(139,123,255,.2),transparent 62%),radial-gradient(420px 360px at 75% 80%,rgba(52,211,153,.12),transparent 62%);animation:drift 24s ease-in-out infinite alternate;will-change:transform}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000 5%,transparent 72%);mask-image:radial-gradient(ellipse at 50% 30%,#000 5%,transparent 72%);animation:grid 12s linear infinite}
+@keyframes drift{0%{transform:translate3d(-4%,-3%,0) rotate(0deg) scale(1)}50%{transform:translate3d(5%,4%,0) rotate(8deg) scale(1.1)}100%{transform:translate3d(-2%,6%,0) rotate(-6deg) scale(1.03)}}
+@keyframes grid{to{background-position:0 56px,56px 0}}
+@media(prefers-reduced-motion:reduce){body::before,body::after{animation:none}}
+.app{max-width:1080px;margin:0 auto}.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.cols>div{min-width:0}@media(max-width:820px){.cols{grid-template-columns:1fr;gap:0}}
+header{text-align:center;margin-bottom:24px}
+.logo{width:50px;height:50px;border-radius:16px;display:inline-grid;place-items:center;font-size:23px;background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.16);box-shadow:0 0 34px rgba(139,123,255,.45),inset 0 1px 0 rgba(255,255,255,.25);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+h1{font-size:23px;margin:14px 0 3px;letter-spacing:-.4px;font-weight:700;background:linear-gradient(90deg,#fff,#b9b0ff 60%,#8fd8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{margin:0;color:var(--mut);font-size:14px}
+.seg,.card{background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.022));border:1px solid var(--bd);backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%);box-shadow:0 12px 40px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.09)}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);border-radius:16px;padding:5px;margin:0 auto 18px;max-width:580px;gap:4px}
+.seg button{border:1px solid transparent;background:none;padding:10px 4px;border-radius:12px;font:600 14px inherit;font-family:inherit;color:var(--mut);cursor:pointer;transition:.2s}
+.seg button:hover{color:var(--tx)}
+.seg button.on{color:#fff;background:linear-gradient(135deg,rgba(139,123,255,.4),rgba(56,189,248,.2));border-color:rgba(255,255,255,.16);box-shadow:0 4px 18px rgba(139,123,255,.3),inset 0 1px 0 rgba(255,255,255,.18)}
+.card{border-radius:22px;padding:20px;margin-bottom:16px}
+.card h3{margin:0 0 14px;font-size:12px;letter-spacing:.9px;text-transform:uppercase;color:var(--mut)}
+label{display:block;font-size:13px;font-weight:600;margin:0 0 7px;color:var(--lb)}
+label small{color:var(--mut);font-weight:400}
+.f{margin-bottom:14px}.f:last-child{margin-bottom:0}
+textarea,input{width:100%;background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:12px 14px;color:var(--tx);font:14px inherit;font-family:inherit;outline:none;transition:.2s;box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
+textarea{min-height:110px;resize:vertical;font:12.5px ui-monospace,Menlo,Consolas,monospace}
+::placeholder{color:#575e73}
+textarea:focus,input:focus{border-color:rgba(139,123,255,.75);box-shadow:0 0 0 3px rgba(139,123,255,.2),0 0 22px rgba(139,123,255,.18)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{background:rgba(139,123,255,.14);color:#cfc8ff;border:1px solid rgba(139,123,255,.3);border-radius:999px;padding:4px 11px;font:600 12px ui-monospace,Menlo,Consolas,monospace}
+.err{color:#fb7185;font-size:13px;margin-top:8px}
+.set{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.set label{font-size:12px;color:var(--mut)}
+.set input{padding:10px 12px}
+.note{color:var(--mut);font-size:12px;margin:14px 0 0}
+@media(max-width:520px){.two,.set{grid-template-columns:1fr 1fr}}
+.out{background:rgba(0,0,0,.5);border:1px solid var(--bd);border-radius:20px;overflow:hidden;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 12px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07);margin-bottom:14px}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.01));border-bottom:1px solid rgba(255,255,255,.07)}
+.bar span{color:var(--mut);font-size:12px;font-weight:600;letter-spacing:.4px}
+.cp{border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:6px 14px;font:600 12.5px inherit;font-family:inherit;color:#fff;background:linear-gradient(135deg,rgba(139,123,255,.45),rgba(56,189,248,.25));cursor:pointer;transition:.2s}
+.cp:hover{box-shadow:0 0 18px rgba(139,123,255,.45)}
+.cp.done{background:rgba(52,211,153,.3);border-color:rgba(52,211,153,.6)}
+pre{margin:0;padding:16px;color:#7dffc4;text-shadow:0 0 12px rgba(125,255,196,.25);font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;min-height:80px;max-height:380px;overflow-y:auto}
+pre.empty{color:#4d546a;text-shadow:none}
+.hint{color:var(--mut);font-size:12.5px;text-align:center;margin-top:4px}
+.hide{display:none}
+@media(max-width:520px){.seg button{font-size:12px}}
+.presets{display:flex;gap:8px;margin-bottom:14px}.presets button{flex:1;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 8px;font:600 13.5px inherit;font-family:inherit;color:var(--mut);background:rgba(255,255,255,.04);cursor:pointer;transition:.2s}.presets button:hover{color:#fff;border-color:rgba(255,255,255,.25)}.presets button.on{color:#fff;background:linear-gradient(135deg,rgba(139,123,255,.4),rgba(56,189,248,.2));border-color:rgba(255,255,255,.18);box-shadow:0 4px 16px rgba(139,123,255,.3)}
+/* modern motion */
+@keyframes up{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes shine{to{background-position:200% center}}
+@keyframes float{50%{transform:translateY(-6px)}}
+@keyframes ping{70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+@keyframes flash{from{background:rgba(125,255,196,.14)}to{background:transparent}}
+header,.seg,.left>*,.right>*{animation:up .7s cubic-bezier(.2,.8,.2,1) both}
+.seg{animation-delay:.1s}.left>*{animation-duration:.55s}.right>*{animation-delay:.2s}
+h1{background:linear-gradient(90deg,#fff,#b9b0ff,#8fd8ff,#b9b0ff,#fff);background-size:200% auto;-webkit-background-clip:text;background-clip:text;animation:shine 7s linear infinite}
+.logo{animation:float 4.5s ease-in-out infinite}
+.pill{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;color:var(--lb);background:rgba(255,255,255,.05);border:1px solid var(--bd)}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:ping 2s infinite}
+.seg{position:relative}.seg .ind{position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 22px)/4);border-radius:12px;background:linear-gradient(135deg,rgba(139,123,255,.42),rgba(56,189,248,.22));border:1px solid rgba(255,255,255,.16);box-shadow:0 4px 18px rgba(139,123,255,.3),inset 0 1px 0 rgba(255,255,255,.18);transition:transform .5s cubic-bezier(.3,1.25,.4,1)}
+.seg button{position:relative;z-index:1}.seg button.on{background:none;border-color:transparent;box-shadow:none}
+.card,.out{position:relative;transition:transform .3s,border-color .3s}
+.card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(380px circle at var(--mx,50%) var(--my,0%),rgba(139,123,255,.14),transparent 55%)}
+.card:hover::before{opacity:1}.card:hover,.out:hover{border-color:rgba(255,255,255,.16)}
+.cp:active,.presets button:active{transform:scale(.94)}
+pre.fl{animation:flash .8s ease-out}
+.glow{position:fixed;left:0;top:0;width:520px;height:520px;border-radius:50%;pointer-events:none;z-index:-1;background:radial-gradient(circle,rgba(139,123,255,.2),transparent 65%);filter:blur(12px);opacity:0;transition:opacity .4s}
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,30px);opacity:0;padding:11px 20px;border-radius:14px;background:rgba(20,24,41,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(52,211,153,.5);color:#fff;font:600 13px Inter,system-ui,sans-serif;pointer-events:none;z-index:50;transition:.4s cubic-bezier(.2,1.2,.3,1);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.brand{display:inline-block;margin-bottom:16px;font-size:13px;font-weight:800;letter-spacing:.5em;padding-left:.5em;background:linear-gradient(90deg,#fff,#b9b0ff,#8fd8ff,#b9b0ff,#fff);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(139,123,255,.7));animation:shine 6s linear infinite}
+.credit{text-align:center;margin-top:32px;font-size:11.5px;color:var(--mut);letter-spacing:.3px;animation:up .8s .5s both}.credit span{color:var(--lb);font-weight:600}
+::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
+</style>
+</head>
+<body>
+<div class="glow" id="glow"></div>
+<div class="toast" id="toast">✓ Copied to clipboard</div>
+<div class="app">
+ <header>
+  <div class="brand">GALAXYNET</div>
+  <div class="logo">📡</div>
+  <h1>Huawei ONT Generator</h1>
+  <p>Paste the autofind output, get the commands.</p>
+  <span class="pill"><i></i>Huawei OLT · GPON</span>
+ </header>
+
+ <div class="seg" id="seg"><i class="ind" id="ind"></i>
+  <button class="on" data-m="single">Single ONT</button>
+  <button data-m="bulk">Bulk ONT</button>
+  <button data-m="del">Delete</button>
+  <button data-m="bdel">Bulk Delete</button>
+ </div>
+
+ <div class="cols"><div class="left">
+ <!-- SINGLE -->
+ <section id="single">
+  <div class="card">
+   <div class="f">
+    <label>Autofind output <small>(one ONT)</small></label>
+    <textarea id="s_src" placeholder="Paste one ONT block here…"></textarea>
+    <div class="chips" id="s_chips"></div>
+    <div class="err" id="s_err"></div>
+   </div>
+   <div class="two">
+    <div class="f"><label>Customer name</label><input id="s_desc" placeholder="CLIENT_NAME_PPPoE"></div>
+    <div class="f"><label>ONT ID <small>(optional)</small></label><input id="s_id" inputmode="numeric" placeholder="e.g. 18"></div>
+   </div>
+  </div>
+ </section>
+
+ <!-- BULK -->
+ <section id="bulk" class="hide">
+  <div class="card">
+   <div class="f">
+    <label>Autofind output <small>(many ONTs)</small></label>
+    <textarea id="b_src" style="min-height:150px" placeholder="Paste all ONT blocks here…"></textarea>
+    <div class="chips" id="b_chips"></div>
+    <div class="err" id="b_err"></div>
+   </div>
+   <div class="two">
+    <div class="f"><label>Name prefix</label><input id="b_desc" placeholder="CLIENT"></div>
+    <div class="f"><label>Starting ONT ID</label><input id="b_id" inputmode="numeric" placeholder="e.g. 1"></div>
+   </div>
+  </div>
+ </section>
+
+ <!-- SETTINGS -->
+ <div class="card" id="settings">
+  <h3>Settings</h3>
+  <div class="presets" id="presets">
+   <button data-lp="1" data-sp="1" data-gm="1">Aftabnagar</button>
+   <button data-lp="26" data-sp="26" data-gm="26">Badda</button>
+  </div>
+  <div class="set">
+   <div><label>Line profile ID</label><input class="cfg" id="lp" value="26"></div>
+   <div><label>Service profile ID</label><input class="cfg" id="sp" value="26"></div>
+   <div><label>GEM port</label><input class="cfg" id="gm" value="26"></div>
+   <div><label>Service VLAN</label><input class="cfg" id="vl" value="1802"></div>
+   <div><label>User VLAN</label><input class="cfg" id="uv" value="1802"></div>
+   <div><label>ETH port</label><input class="cfg" id="eth" value="1"></div>
+  </div>
+ </div>
+
+ <!-- DELETE -->
+ <section id="del" class="hide">
+  <div class="card">
+   <div class="two">
+    <div class="f"><label>Port (F/S/P)</label><input id="sfsp" placeholder="0/1/0"></div>
+    <div class="f"><label>ONT ID</label><input id="sid" inputmode="numeric" placeholder="e.g. 18"></div>
+   </div>
+  </div>
+ </section>
+ <section id="bdel" class="hide">
+  <div class="card">
+   <div class="f"><label>Default port <small>(F/S/P)</small></label><input id="dfsp" placeholder="0/1/0"></div>
+   <div class="f"><label>ONT IDs <small>(single, list or range)</small></label><textarea id="did" placeholder="18&#10;1-5, 8, 12&#10;0/1/1 3-6"></textarea></div>
+   <p class="note">One entry per line. Use a comma list or a range like 1-5. Start a line with a port to override the default, for example 0/1/1 3-6.</p>
+  </div>
+ </section>
+ </div>
+ <div class="right">
+
+ <div class="out hide" id="boxc">
+  <div class="bar"><span>Option A · Confirm all found ONTs on the port</span><button class="cp" id="cp3">Copy</button></div>
+  <pre id="outc" class="empty">Commands will appear here…</pre>
+ </div>
+ <div class="out">
+  <div class="bar"><span id="t1">1 · Add ONT</span><button class="cp" id="cp">Copy</button></div>
+  <pre id="out" class="empty">Commands will appear here…</pre>
+ </div>
+ <div class="out" id="box2">
+  <div class="bar"><span>2 · Native VLAN &amp; service-port</span><button class="cp" id="cp2">Copy</button></div>
+  <pre id="out2" class="empty">VLAN commands will appear here…</pre>
+ </div>
+ <div class="hint" id="hint"></div>
+ </div></div>
+ <footer class="credit">© GALAXYNET · Created by <span>Ishtiaq Islam Himel</span></footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let mode="single";
+const KEY="ont_cfg3";
+try{const s=JSON.parse(localStorage.getItem(KEY)||"{}");document.querySelectorAll(".cfg").forEach(e=>{if(s[e.id])e.value=s[e.id]})}catch(e){}
+
+function parse(t){
+  const parts=t.split(/(?=^\s*Number\s*:)/m),out=[];
+  (parts.length>1?parts:[t]).forEach(b=>{
+    const f=b.match(/F\/S\/P\s*:\s*(\d+)\/(\d+)\/(\d+)/i);
+    const s=b.match(/Ont\s+SN\s*:\s*([0-9A-Fa-f]{16})/i)||b.match(/\bSN\s*:\s*([0-9A-Fa-f]{16})/i);
+    if(f&&s)out.push({fr:f[1],sl:f[2],pt:f[3],sn:s[1].toUpperCase()});
+  });
+  return out.filter((o,i)=>out.findIndex(x=>x.sn===o.sn)===i);
+}
+const clean=s=>s.trim().replace(/\s+/g,"_");
+const show=(t1,t2,hint,t0)=>{
+  const a=$("out"),b=$("out2");
+  a.textContent=t1||"Commands will appear here…";a.classList.toggle("empty",!t1);pulse(a,t1);
+  b.textContent=t2||"VLAN commands will appear here…";b.classList.toggle("empty",!t2);pulse(b,t2);
+  $("box2").classList.toggle("hide",mode==="del"||mode==="bdel");
+  $("boxc").classList.toggle("hide",mode!=="bulk");const c0=$("outc");c0.textContent=t0||"Commands will appear here…";c0.classList.toggle("empty",!t0);
+  $("t1").textContent=mode==="del"?"Delete ONT":(mode==="bdel"?"Bulk delete":(mode==="bulk"?"Option B · Add each ONT by serial number":"1 · Add ONT"));
+  $("hint").textContent=hint||"";
+};
+
+function gen(r,desc,id0,multi){
+  const c={};document.querySelectorAll(".cfg").forEach(e=>c[e.id]=e.value.trim());
+  const d=clean(desc),hasId=/^\d+$/.test(id0),base=hasId?parseInt(id0,10):0;
+  const g={},nv={},sp=[],cnt={};
+  r.forEach((o,i)=>{
+    const k=o.fr+"/"+o.sl,pk=k+"/"+o.pt;
+    cnt[pk]=(cnt[pk]??-1)+1;
+    const oid=hasId?base+cnt[pk]:(multi?"<ID_"+(i+1)+">":"<ONT_ID>");
+    const name=d?(multi?d+"_"+(i+1):d):"";
+    const vS=c.vl,vU=c.uv;
+    (g[k]=g[k]||[]).push(`ont add ${o.pt} sn-auth ${o.sn} omci ont-lineprofile-id ${c.lp} ont-srvprofile-id ${c.sp}${name?" desc "+name:""}`);
+    (nv[k]=nv[k]||[]).push(`ont port native-vlan ${o.pt} ${oid} eth ${c.eth} vlan ${vU} priority 0`);
+    sp.push(`service-port vlan ${vS} gpon ${o.fr}/${o.sl}/${o.pt} ont ${oid} gemport ${c.gm} multi-service user-vlan ${vU} tag-transform translate`);
+  });
+  const cf={};r.forEach(o=>{const k=o.fr+"/"+o.sl;cf[k]=cf[k]||[];if(!cf[k].includes(o.pt))cf[k].push(o.pt)});
+  const L0=[];Object.keys(cf).forEach(k=>L0.push(`interface gpon ${k}`,...cf[k].map(p=>`ont confirm ${p} all sn-auth omci ont-lineprofile-id ${c.lp} ont-srvprofile-id ${c.sp}`),`quit`));
+  const L1=[],L2=[];
+  Object.keys(g).forEach(k=>L1.push(`interface gpon ${k}`,...g[k],`quit`));
+  Object.keys(nv).forEach(k=>L2.push(`interface gpon ${k}`,...nv[k],`quit`));
+  L2.push("",...sp);
+  let hint="";
+  if(!hasId)hint=multi?"Enter a starting ONT ID (e.g. 1) so every ONT gets its own ID.":"After the OLT assigns the ONT ID, type it in the ONT ID box to fill in <ONT_ID>.";
+  else if(multi)hint="IDs count up from the starting ID separately on each PON port.";
+  show(L1.join("\n"),L2.join("\n"),hint,multi?L0.join("\n"):"");
+}
+
+function render(){
+  if(mode==="del"){
+    const m=$("sfsp").value.trim().match(/^(\d+)\/(\d+)\/(\d+)$/),id=$("sid").value.trim();
+    const any=$("sfsp").value.trim()||id;
+    if(!m||!/^\d+$/.test(id))return show("","",any?"Enter the port like 0/1/0 and a numeric ONT ID.":"");
+    return show([`undo service-port port ${m[1]}/${m[2]}/${m[3]} ont ${id}`,"","y",`interface gpon ${m[1]}/${m[2]}`,`ont delete ${m[3]} ${id}`,"",`quit`].join("\n"));
+  }
+  if(mode==="bdel"){
+    const dp=$("dfsp").value.trim(),P=/^(\d+)\/(\d+)\/(\d+)$/,items=[],bad=[];
+    if(dp&&!P.test(dp))bad.push(dp);
+    $("did").value.split(/\n/).forEach(line=>{
+      line=line.trim();if(!line)return;
+      let port=dp,rest=line;const m=line.match(/^(\d+\/\d+\/\d+)\s+(.*)$/);
+      if(m){port=m[1];rest=m[2]}
+      rest.split(/[\s,]+/).filter(Boolean).forEach(t=>{
+        const q=t.match(/^(\d+)(?:-(\d+))?$/);
+        if(!q||!P.test(port)){bad.push(t);return}
+        const a=+q[1],b=q[2]?+q[2]:a;
+        if(b<a||b-a>127){bad.push(t);return}
+        for(let n=a;n<=b;n++)items.push([port,n]);
+      });
+    });
+    const seen={},list=items.filter(x=>{const k=x.join("/");return seen[k]?false:(seen[k]=1)});
+    if(!list.length)return show("","",bad.length?"Could not read: "+bad.join(", ")+" (set a default port or start the line with one).":"");
+    const g={},L=list.flatMap(([p,n])=>[`undo service-port port ${p} ont ${n}`,"","y"]);
+    list.forEach(([p,n])=>{const [f,s,t]=p.split("/");(g[f+"/"+s]=g[f+"/"+s]||[]).push(`ont delete ${t} ${n}`,"")});
+    Object.keys(g).forEach(k=>L.push(`interface gpon ${k}`,...g[k],`quit`));
+    return show(L.join("\n"),"",list.length+" ONT(s)"+(bad.length?" · could not read: "+bad.join(", "):""));
+  }
+  const p=mode==="single"?"s_":"b_",src=$(p+"src").value;
+  let r=parse(src);
+  const aftOn=$("lp").value.trim()==="1"&&$("sp").value.trim()==="1"&&$("gm").value.trim()==="1";
+  $(p+"chips").innerHTML=r.map(o=>{const v=aftOn&&o.fr==="0"&&o.sl==="0"&&$("v"+o.pt)?$("v"+o.pt).value.trim():"";return `<span class="chip">${o.fr}/${o.sl}/${o.pt} · ${o.sn}${v?" · VLAN "+v:""}</span>`}).join("");
+  $(p+"err").textContent=(src.trim()&&!r.length)?"Could not find F/S/P and Ont SN in this text.":"";
+  if(!r.length)return show("");
+  if(mode==="single"&&r.length>1){$(p+"err").textContent="More than one ONT found – using the first. Use the Bulk tab for all.";r=[r[0]]}
+  gen(r,$(p+"desc").value,$(p+"id").value.trim(),mode==="bulk");
+}
+document.querySelectorAll("input,textarea").forEach(e=>e.addEventListener("input",()=>{
+  if(e.classList.contains("cfg")){try{const s={};document.querySelectorAll(".cfg").forEach(x=>s[x.id]=x.value);localStorage.setItem(KEY,JSON.stringify(s))}catch(x){}}
+  render();
+}));
+document.querySelectorAll("#seg button").forEach(b=>b.onclick=()=>{
+  mode=b.dataset.m;moveInd(b);
+  document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("on",x===b));
+  ["single","bulk","del","bdel"].forEach(s=>$(s).classList.toggle("hide",s!==mode));
+  $("settings").classList.toggle("hide",mode==="del"||mode==="bdel");
+  render();
+});
+[["cp","out"],["cp2","out2"],["cp3","outc"]].forEach(([b,o])=>{$(b).onclick=async()=>{
+  const t=$(o).classList.contains("empty")?"":$(o).textContent;if(!t)return;
+  try{await navigator.clipboard.writeText(t)}catch(e){const r=document.createRange();r.selectNodeContents($(o));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand("copy")}
+  $(b).textContent="Copied ✓";$(b).classList.add("done");
+  const tt=$("toast");tt.classList.add("on");clearTimeout(window._tt);window._tt=setTimeout(()=>tt.classList.remove("on"),1700);
+  setTimeout(()=>{$(b).textContent="Copy";$(b).classList.remove("done")},1300);
+}});
+function markPresets(){document.querySelectorAll("#presets button").forEach(b=>b.classList.toggle("on",$("lp").value.trim()===b.dataset.lp&&$("sp").value.trim()===b.dataset.sp&&$("gm").value.trim()===b.dataset.gm))}
+document.querySelectorAll("#presets button").forEach(b=>b.onclick=()=>{[["lp","lp"],["sp","sp"],["gm","gm"]].forEach(([i,k])=>{$(i).value=b.dataset[k];$(i).dispatchEvent(new Event("input",{bubbles:true}))})});
+document.querySelectorAll(".cfg").forEach(e=>e.addEventListener("input",markPresets));
+
+function pulse(el,t){if(!t||el.dataset.l===t)return;el.dataset.l=t;el.classList.remove("fl");void el.offsetWidth;el.classList.add("fl")}
+function moveInd(b){const bs=[...document.querySelectorAll("#seg button")];$("ind").style.transform=`translateX(calc(${bs.indexOf(b)}*(100% + 4px)))`}
+moveInd(document.querySelector("#seg button.on"));
+document.addEventListener("mousemove",e=>{
+  const g=$("glow");g.style.opacity=1;g.style.transform=`translate(${e.clientX-260}px,${e.clientY-260}px)`;
+  const c=e.target.closest&&e.target.closest(".card");
+  if(c){const r=c.getBoundingClientRect();c.style.setProperty("--mx",(e.clientX-r.left)+"px");c.style.setProperty("--my",(e.clientY-r.top)+"px")}
+});
+document.addEventListener("mouseleave",()=>{$("glow").style.opacity=0});
+markPresets();
+render();
+</script>
+</body>
+</html>
