@@ -80,6 +80,7 @@ pre.fl{animation:flash .8s ease-out}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .brand{display:inline-block;margin-bottom:16px;font-size:13px;font-weight:800;letter-spacing:.5em;padding-left:.5em;background:linear-gradient(90deg,#fff,#b9b0ff,#8fd8ff,#b9b0ff,#fff);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(139,123,255,.7));animation:shine 6s linear infinite}
 .credit{text-align:center;margin-top:32px;font-size:11.5px;color:var(--mut);letter-spacing:.3px;animation:up .8s .5s both}.credit span{color:var(--lb);font-weight:600}
+.req{color:#fb7185;font-weight:700}input.bad{border-color:rgba(251,113,133,.75)!important;box-shadow:0 0 0 3px rgba(251,113,133,.16)!important}
 ::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
 </style>
 </head>
@@ -113,7 +114,7 @@ pre.fl{animation:flash .8s ease-out}
     <div class="err" id="s_err"></div>
    </div>
    <div class="two">
-    <div class="f"><label>Customer name</label><input id="s_desc" placeholder="CLIENT_NAME_PPPoE"></div>
+    <div class="f"><label>Customer name <span class="req">*</span> <small>(PPPoE, required)</small></label><input id="s_desc" placeholder="CLIENT_NAME_PPPoE"></div>
     <div class="f"><label>ONT ID <small>(optional)</small></label><input id="s_id" inputmode="numeric" placeholder="e.g. 18"></div>
    </div>
   </div>
@@ -172,7 +173,7 @@ pre.fl{animation:flash .8s ease-out}
  <div class="right">
 
  <div class="out hide" id="boxc">
-  <div class="bar"><span>Option A · Confirm all found ONTs on the port</span><button class="cp" id="cp3">Copy</button></div>
+  <div class="bar"><span>Confirm all found ONTs on the port · ont confirm</span><button class="cp" id="cp3">Copy</button></div>
   <pre id="outc" class="empty">Commands will appear here…</pre>
  </div>
  <div class="out">
@@ -206,11 +207,11 @@ function parse(t){
 const clean=s=>s.trim().replace(/\s+/g,"_");
 const show=(t1,t2,hint,t0)=>{
   const a=$("out"),b=$("out2");
-  a.textContent=t1||"Commands will appear here…";a.classList.toggle("empty",!t1);pulse(a,t1);
-  b.textContent=t2||"VLAN commands will appear here…";b.classList.toggle("empty",!t2);pulse(b,t2);
+  a.textContent=t1?t1+"\n":"Commands will appear here…";a.classList.toggle("empty",!t1);pulse(a,t1);
+  b.textContent=t2?t2+"\n":"VLAN commands will appear here…";b.classList.toggle("empty",!t2);pulse(b,t2);
   $("box2").classList.toggle("hide",mode==="del"||mode==="bdel");
-  $("boxc").classList.toggle("hide",mode!=="bulk");const c0=$("outc");c0.textContent=t0||"Commands will appear here…";c0.classList.toggle("empty",!t0);
-  $("t1").textContent=mode==="del"?"Delete ONT":(mode==="bdel"?"Bulk delete":(mode==="bulk"?"Option B · Add each ONT by serial number":"1 · Add ONT"));
+  $("boxc").classList.toggle("hide",mode!=="bulk"&&mode!=="single");const c0=$("outc");c0.textContent=t0||"Commands will appear here…";c0.classList.toggle("empty",!t0);
+  $("t1").textContent=mode==="del"?"Delete ONT":(mode==="bdel"?"Bulk delete":(mode==="bulk"?"Add each ONT by serial number":"1 · Add ONT"));
   $("hint").textContent=hint||"";
 };
 
@@ -229,15 +230,15 @@ function gen(r,desc,id0,multi){
     sp.push(`service-port vlan ${vS} gpon ${o.fr}/${o.sl}/${o.pt} ont ${oid} gemport ${c.gm} multi-service user-vlan ${vU} tag-transform translate`);
   });
   const cf={};r.forEach(o=>{const k=o.fr+"/"+o.sl;cf[k]=cf[k]||[];if(!cf[k].includes(o.pt))cf[k].push(o.pt)});
-  const L0=[];Object.keys(cf).forEach(k=>L0.push(`interface gpon ${k}`,...cf[k].map(p=>`ont confirm ${p} all sn-auth omci ont-lineprofile-id ${c.lp} ont-srvprofile-id ${c.sp}`),`quit`));
-  const L1=[],L2=[];
-  Object.keys(g).forEach(k=>L1.push(`interface gpon ${k}`,...g[k],`quit`));
-  Object.keys(nv).forEach(k=>L2.push(`interface gpon ${k}`,...nv[k],`quit`));
-  L2.push("",...sp);
+  const L0=[];Object.keys(cf).forEach(k=>L0.push(`interface gpon ${k}`,"",...cf[k].flatMap(p=>[`ont confirm ${p} all sn-auth omci ont-lineprofile-id ${c.lp} ont-srvprofile-id ${c.sp}`,""]),`quit`,""));L0.push("");
+  const L1=[],L2=[],gk=Object.keys(g),multiSlot=gk.length>1;
+  gk.forEach((k,i)=>{L1.push(`interface gpon ${k}`,"",...g[k].flatMap(x=>[x,""]));if(i<gk.length-1)L1.push("quit","")});
+  Object.keys(nv).forEach(k=>L2.push(...(multiSlot?[`interface gpon ${k}`,""]:[]),...nv[k].flatMap(x=>[x,""]),"quit",""));
+  L2.push(...sp.flatMap(x=>[x,""]));
   let hint="";
   if(!hasId)hint=multi?"Enter a starting ONT ID (e.g. 1) so every ONT gets its own ID.":"After the OLT assigns the ONT ID, type it in the ONT ID box to fill in <ONT_ID>.";
   else if(multi)hint="IDs count up from the starting ID separately on each PON port.";
-  show(L1.join("\n"),L2.join("\n"),hint,multi?L0.join("\n"):"");
+  show(L1.join("\n"),L2.join("\n"),hint,L0.join("\n"));
 }
 
 function render(){
@@ -245,7 +246,7 @@ function render(){
     const m=$("sfsp").value.trim().match(/^(\d+)\/(\d+)\/(\d+)$/),id=$("sid").value.trim();
     const any=$("sfsp").value.trim()||id;
     if(!m||!/^\d+$/.test(id))return show("","",any?"Enter the port like 0/1/0 and a numeric ONT ID.":"");
-    return show([`undo service-port port ${m[1]}/${m[2]}/${m[3]} ont ${id}`,"","y",`interface gpon ${m[1]}/${m[2]}`,`ont delete ${m[3]} ${id}`,"",`quit`].join("\n"));
+    return show([`undo service-port port ${m[1]}/${m[2]}/${m[3]} ont ${id}`,"","y","",`interface gpon ${m[1]}/${m[2]}`,"",`ont delete ${m[3]} ${id}`,"",`quit`].join("\n"));
   }
   if(mode==="bdel"){
     const dp=$("dfsp").value.trim(),P=/^(\d+)\/(\d+)\/(\d+)$/,items=[],bad=[];
@@ -264,9 +265,9 @@ function render(){
     });
     const seen={},list=items.filter(x=>{const k=x.join("/");return seen[k]?false:(seen[k]=1)});
     if(!list.length)return show("","",bad.length?"Could not read: "+bad.join(", ")+" (set a default port or start the line with one).":"");
-    const g={},L=list.flatMap(([p,n])=>[`undo service-port port ${p} ont ${n}`,"","y"]);
+    const g={},L=list.flatMap(([p,n])=>[`undo service-port port ${p} ont ${n}`,"","y",""]);
     list.forEach(([p,n])=>{const [f,s,t]=p.split("/");(g[f+"/"+s]=g[f+"/"+s]||[]).push(`ont delete ${t} ${n}`,"")});
-    Object.keys(g).forEach(k=>L.push(`interface gpon ${k}`,...g[k],`quit`));
+    Object.keys(g).forEach(k=>L.push(`interface gpon ${k}`,"",...g[k],`quit`));
     return show(L.join("\n"),"",list.length+" ONT(s)"+(bad.length?" · could not read: "+bad.join(", "):""));
   }
   const p=mode==="single"?"s_":"b_",src=$(p+"src").value;
@@ -276,6 +277,7 @@ function render(){
   $(p+"err").textContent=(src.trim()&&!r.length)?"Could not find F/S/P and Ont SN in this text.":"";
   if(!r.length)return show("");
   if(mode==="single"&&r.length>1){$(p+"err").textContent="More than one ONT found – using the first. Use the Bulk tab for all.";r=[r[0]]}
+  if(mode==="single"){const nm=$("s_desc");if(!nm.value.trim()){nm.classList.add("bad");$("s_err").textContent="Customer name (PPPoE) is required. Enter it to generate the commands.";return show("")}nm.classList.remove("bad")}
   gen(r,$(p+"desc").value,$(p+"id").value.trim(),mode==="bulk");
 }
 document.querySelectorAll("input,textarea").forEach(e=>e.addEventListener("input",()=>{
@@ -313,5 +315,4 @@ markPresets();
 render();
 </script>
 </body>
- 
 </html>
