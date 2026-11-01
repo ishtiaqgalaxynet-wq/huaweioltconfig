@@ -249,7 +249,7 @@ pre.fl{animation:flash .8s ease-out}
  <div class="sbar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" placeholder="Search all commands…  (press / to search)"><button id="qx" class="qx hide" type="button">✕</button></div>
  <div class="statusbar"><span id="cnt"></span><button class="pill2 hide" id="showall" type="button">Show all commands</button></div>
  <div id="list"></div>
- <p class="disc">Syntax can differ a little by OLT model and software version. Test on one ONT first.</p>
+ <p class="disc">Checked against Huawei documentation and ISP guides for MA5608T, MA5683T and MA5800. A few commands depend on the software version and say so. Test on one ONT first.</p>
  <footer class="credit">© GALAXYNET · Created by <span>Ishtiaq Islam Himel</span></footer>
 </div>
 
@@ -387,20 +387,25 @@ const CMDS=[
 ["Basic & system","Software version","display version",""],
 ["Basic & system","System uptime","display sysuptime",""],
 ["Basic & system","CPU usage","display cpu",""],
+["Basic & system","Board temperature","display temperature {FS}","Temperature of the board in that slot."],
 ["Basic & system","Ping from the OLT","ping 8.8.8.8","Change the address to test your upstream."],
 ["Basic & system","Full running config (backup)","display current-configuration","Long output."],
 ["Find an ONT","Find ONT by serial number","display ont info by-sn {SN}","Shows the PON port (F/S/P) and the ONT ID."],
-["Find an ONT","Find ONT by description","display ont info by-desc {DESC}","Use the exact description."],
-["Find an ONT","Find ONT by MAC address","display mac-address mac-address {MAC}","Shows the port and ONT where this MAC was learned. Format: xxxx-xxxx-xxxx."],
+["Find an ONT","Find ONT by description","display ont info by-desc {DESC}","Newer software only. If it gives an error, use the next command."],
+["Find an ONT","Find ONT by description (any software)","display current-configuration | include {DESC}","Shows the ont add line with the port and ONT ID. Then use the serial number to get the full F/S/P."],
+["Find an ONT","Find ONT by MAC address","display mac-address all | include {MAC}","Shows the port, ONT ID and VLAN where this MAC was learned. Write the MAC the way the OLT shows it: xxxx-xxxx-xxxx."],
 ["Find an ONT","ONTs waiting to be added","display ont autofind all",""],
 ["Find an ONT","Find the next free ONT ID","display ont info {F} {S} {P} all","Pick the first ID missing from the list."],
-["MAC addresses","MACs behind one ONT","display mac-address port {FSP} ont {ID}","Device MACs learned on that ONT."],
+["MAC addresses","MACs behind one ONT","display mac-address port {FSP} ont {ID}","Device MACs learned on that ONT. Not supported on some older software; use the service-port command below."],
+["MAC addresses","MACs behind one ONT LAN port","display mac-address ont {FSP} {ID} eth 1","Change eth 1 to the LAN port you want."],
+["MAC addresses","MACs of one service-port","display mac-address service-port 1","Replace 1 with the service-port index from display service-port. Works on all software."],
 ["MAC addresses","MACs on a whole PON port","display mac-address port {FSP}","Long if the PON has many users."],
 ["MAC addresses","MACs in a VLAN","display mac-address vlan {VLAN}",""],
-["PON details & users","Total users on a PON","display ont info summary {FSP}","Total, online and offline ONT count."],
+["PON details & users","Total users on a PON","interface gpon {FS}\ndisplay ont info summary {P}","Total, online and offline ONT count for the port."],
+["PON details & users","Total users on every PON of a board","display ont info summary {FS}","One summary for all ports of the board."],
 ["PON details & users","List every ONT on a PON","display ont info {F} {S} {P} all","ID, state and description for each ONT."],
-["PON details & users","PON port state","interface gpon {FS}\ndisplay port state {P}","Port state, module power and temperature."],
-["PON details & users","PON module type (B+, C+, C++)","display interface gpon {FSP}","Look for the module class in the output. Syntax varies by software."],
+["PON details & users","PON port module (class B+, C+, C++, Tx power)","interface gpon {FS}\ndisplay port state {P}","Look for Module sub-type (CLASS C+ or C++), TX power and temperature."],
+["PON details & users","Every PON port of a board","interface gpon {FS}\ndisplay port state all","Port state and module info for all ports at once."],
 ["PON details & users","Optical power of all ONTs on a PON","interface gpon {FS}\ndisplay ont optical-info {P} all","Finds weak ONTs quickly."],
 ["PON details & users","Board status","display board {FS}","Board and its PON ports."],
 ["PON details & users","All boards","display board 0","Shows every board in frame 0."],
@@ -408,7 +413,9 @@ const CMDS=[
 ["Check one ONT","ONT optical power (dBm)","interface gpon {FS}\ndisplay ont optical-info {P} {ID}","ONT Rx and Tx power, and what the OLT receives."],
 ["Check one ONT","Why the ONT went offline","interface gpon {FS}\ndisplay ont register-info {P} {ID}","Power, fiber or LOS history."],
 ["Check one ONT","ONT LAN port state","interface gpon {FS}\ndisplay ont port state {P} {ID} eth-port all",""],
-["Check one ONT","ONT WAN info (PPPoE, IP)","display ont wan-info {FSP} {ID}","For router-mode ONTs."],
+["Check one ONT","ONT WAN info (PPPoE, IP)","display ont wan-info {FS} {P} {ID}","For router-mode ONTs."],
+["Check one ONT","Full config of one ONT","display current-configuration ont {FSP} {ID}","Shows its ont add line, native VLAN and settings."],
+["Check one ONT","Live traffic of an ONT LAN port","interface gpon {FS}\ndisplay ont traffic {P} {ID} 1","Change the last 1 to the LAN port number."],
 ["Check one ONT","ONT model and software","interface gpon {FS}\ndisplay ont version {P} {ID}",""],
 ["Customer actions","Add an ONT by serial number","interface gpon {FS}\nont add {P} sn-auth {SN} omci ont-lineprofile-id 26 ont-srvprofile-id 26 desc {DESC}","Use the generator page for the right profile IDs."],
 ["Customer actions","Suspend a customer (disable ONT)","interface gpon {FS}\nont deactivate {P} {ID}",""],
@@ -423,6 +430,8 @@ const CMDS=[
 ["VLAN & service-port","Create a VLAN","vlan {VLAN} smart",""],
 ["VLAN & service-port","Add a service-port","service-port vlan {VLAN} gpon {FSP} ont {ID} gemport 26 multi-service user-vlan {VLAN} tag-transform translate","Adjust the GEM port and VLANs to your plan."],
 ["VLAN & service-port","Delete the service-port of an ONT","undo service-port port {FSP} ont {ID}","Answer y when asked."],
+["VLAN & service-port","Delete a service-port by index","undo service-port 1","Replace 1 with the index from display service-port."],
+["VLAN & service-port","VLANs on an uplink port","display port vlan 0/9/0","Change 0/9/0 to your uplink port."],
 ["VLAN & service-port","All service-ports","display service-port all","Long on a busy OLT."],
 ["Profiles","Line profiles","display ont-lineprofile gpon all",""],
 ["Profiles","Service profiles","display ont-srvprofile gpon all",""],
