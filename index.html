@@ -127,6 +127,13 @@ pre.fl{animation:flash .8s ease-out}
 .tag{display:inline-block;font:600 10.5px Inter,system-ui,sans-serif;color:var(--mut);border:1px solid var(--bd);border-radius:999px;padding:2px 9px;margin-top:6px}
 .need{display:inline-block;font:700 10.5px Inter,system-ui,sans-serif;color:#fbbf77;background:rgba(251,146,60,.14);border:1px solid rgba(251,146,60,.35);border-radius:999px;padding:2px 9px;margin:6px 0 0 6px}
 .ready{color:#7dffc4}.cr.dim{opacity:.72}
+.pvl{margin-top:20px;border-top:1px solid var(--bd);padding-top:16px}.pvh{display:flex;justify-content:space-between;align-items:center;gap:10px}.pvh b{font-size:13px}
+.pvc b{display:block;padding:8px 10px;border-radius:10px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.06);font:700 13px ui-monospace,Menlo,Consolas,monospace;color:#fff}.pvl summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:var(--lb)}.pvl summary::-webkit-details-marker{display:none}.pvl summary small{color:var(--mut);font-weight:400;margin-left:6px}.pvl summary::after{content:"⌄";font-size:20px;line-height:1;transition:transform .25s}.pvl[open] summary::after{transform:rotate(180deg)}.pvl[open] summary{margin-bottom:4px}
+.pvc.hit b{border-color:rgba(52,211,153,.7);color:#7dffc4;box-shadow:0 0 12px rgba(52,211,153,.35)}
+#vl.auto{border-color:rgba(52,211,153,.65);box-shadow:0 0 0 3px rgba(52,211,153,.15)}
+.pvb{margin-top:14px;padding:14px;border:1px solid var(--bd);border-radius:16px;background:rgba(255,255,255,.03)}.pvb .pvh{margin-bottom:12px}.pvt{font-size:12px;font-weight:700;color:var(--lb);margin:14px 0 8px}
+.pvg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.pvc{display:flex;flex-direction:column;gap:4px;margin:0}.pvc span{font:600 10.5px ui-monospace,Menlo,Consolas,monospace;color:var(--mut)}.pvc input{padding:8px 10px;font-size:13px}
+@media(max-width:520px){.pvg{grid-template-columns:repeat(2,1fr)}}
 ::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
 </style>
 </head>
@@ -186,17 +193,22 @@ pre.fl{animation:flash .8s ease-out}
  <div class="card" id="settings">
   <h3>Settings</h3>
   <div class="presets" id="presets">
-   <button data-lp="1" data-sp="1" data-gm="1" data-vl="601" data-uv="41">Aftabnagar</button>
-   <button data-lp="26" data-sp="26" data-gm="26" data-vl="1802" data-uv="1802">Badda</button>
+   <button data-lp="1" data-sp="1" data-gm="1" data-vl="" data-uv="41">Aftabnagar</button>
+   <button data-lp="26" data-sp="26" data-gm="26" data-vl="" data-uv="1802">Badda</button>
   </div>
   <div class="set">
    <div><label>Line profile ID</label><input class="cfg" id="lp" value="26"></div>
    <div><label>Service profile ID</label><input class="cfg" id="sp" value="26"></div>
    <div><label>GEM port</label><input class="cfg" id="gm" value="26"></div>
-   <div><label>Service VLAN</label><input class="cfg" id="vl" value="1802"></div>
+   <div><label>Service VLAN <span class="req">*</span> <small id="vauto"></small></label><input class="cfg" id="vl" value="" placeholder="auto by PON"></div>
    <div><label>User VLAN</label><input class="cfg" id="uv" value="1802"></div>
    <div><label>ETH port</label><input class="cfg" id="eth" value="1"></div>
   </div>
+  <details class="pvl"><summary>Service VLAN list by PON <small>(tap to open)</small></summary>
+   <p class="note" style="margin-top:0">Fixed list. The service VLAN is picked from the ONT's port automatically. Only the list of the selected location is shown.</p>
+   <div class="pvb" id="pvb0"><div class="pvh"><b>Aftabnagar · slot 0/0</b></div><div class="pvg" id="pv0"></div></div>
+   <div class="pvb" id="pvb1"><div class="pvh"><b>Badda · slot 0/1</b></div><div class="pvg" id="pv1"></div></div>
+  </details>
  </div>
 
  <!-- DELETE -->
@@ -257,7 +269,17 @@ pre.fl{animation:flash .8s ease-out}
 const $=id=>document.getElementById(id);
 let mode="single";
 const KEY="ont_cfg3";
-try{const s=JSON.parse(localStorage.getItem(KEY)||"{}");document.querySelectorAll(".cfg").forEach(e=>{if(s[e.id])e.value=s[e.id]})}catch(e){}
+try{const s=JSON.parse(localStorage.getItem(KEY)||"{}");document.querySelectorAll(".cfg").forEach(e=>{if(s[e.id]&&e.id!=="vl")e.value=s[e.id]})}catch(e){}
+const PVK="ont_pvlan3";
+const defPV=()=>{const o={};for(let p=0;p<16;p++){o["0/0/"+p]=String(601+p);o["0/1/"+p]=String(1802+p)}return o};
+let PV=defPV();
+const pvlan=o=>{const lp=$("lp").value.trim(),sp=$("sp").value.trim(),gm=$("gm").value.trim(),fs=o.fr+"/"+o.sl;const a=lp==="1"&&sp==="1"&&gm==="1",bd=lp==="26"&&sp==="26"&&gm==="26";if(a&&fs!=="0/0")return null;if(bd&&fs!=="0/1")return null;return PV[fs+"/"+o.pt]||null};
+function drawPV(){["0/0","0/1"].forEach((fs,i)=>{$("pv"+i).innerHTML=Array.from({length:16},(_,p)=>`<div class="pvc" data-k="${fs}/${p}"><span>${fs}/${p}</span><b>${PV[fs+"/"+p]}</b></div>`).join("")})}
+function showPV(){const lp=$("lp").value.trim(),sp=$("sp").value.trim(),gm=$("gm").value.trim();const a=lp==="1"&&sp==="1"&&gm==="1",bd=lp==="26"&&sp==="26"&&gm==="26";$("pvb0").classList.toggle("hide",bd&&!a);$("pvb1").classList.toggle("hide",a&&!bd)}
+document.querySelectorAll(".cfg").forEach(e=>e.addEventListener("input",showPV));showPV();
+function markHit(r){const ks=new Set(r.map(o=>o.fr+"/"+o.sl+"/"+o.pt));document.querySelectorAll(".pvc").forEach(c=>c.classList.toggle("hit",ks.has(c.dataset.k)))}
+$("vl").addEventListener("input",()=>{$("vl").dataset.auto="0";$("vl").classList.remove("auto")},true);
+drawPV();
 
 function parse(t){
   const parts=t.split(/(?=^\s*Number\s*:)/m),out=[];
@@ -288,7 +310,7 @@ function gen(r,desc,id0,multi){
     cnt[pk]=(cnt[pk]??-1)+1;
     const oid=hasId?base+cnt[pk]:(multi?"<ID_"+(i+1)+">":"<ONT_ID>");
     const name=d?(multi?d+"_"+(i+1):d):"";
-    const vS=c.vl,vU=c.uv;
+    const vS=pvlan(o)||c.vl||"<VLAN>",vU=c.uv;
     (g[k]=g[k]||[]).push(`ont add ${o.pt} sn-auth ${o.sn} omci ont-lineprofile-id ${c.lp} ont-srvprofile-id ${c.sp}${name?" desc "+name:""}`);
     (nv[k]=nv[k]||[]).push(`ont port native-vlan ${o.pt} ${oid} eth ${c.eth} vlan ${vU} priority 0`);
     sp.push(`service-port vlan ${vS} gpon ${o.fr}/${o.sl}/${o.pt} ont ${oid} gemport ${c.gm} multi-service user-vlan ${vU} tag-transform translate`);
@@ -302,7 +324,7 @@ function gen(r,desc,id0,multi){
   let hint="";
   if(!hasId)hint=multi?"Enter a starting ONT ID (e.g. 1) so every ONT gets its own ID.":"After the OLT assigns the ONT ID, type it in the ONT ID box to fill in <ONT_ID>.";
   else if(multi)hint="IDs count up from the starting ID separately on each PON port.";
-  const needId=!multi&&!hasId;if(needId)hint="Run box 1 on the OLT first, then enter the ONT ID it assigned to unlock box 2.";show(L1.join("\n"),needId?"":L2.join("\n"),hint,L0.join("\n"));
+  const noVl=L2.join("").includes("<VLAN>");if(noVl)hint="A port is not in the VLAN list. Add it in Settings, or fill the Service VLAN box, then replace <VLAN>.";const needId=!multi&&!hasId;if(needId)hint="Run box 1 on the OLT first, then enter the ONT ID it assigned to unlock box 2.";show(L1.join("\n"),needId?"":L2.join("\n"),hint,L0.join("\n"));
 }
 
 function render(){
@@ -336,12 +358,19 @@ function render(){
   }
   const p=mode==="single"?"s_":"b_",src=$(p+"src").value;
   let r=parse(src);
-  $(p+"chips").innerHTML=r.map(o=>`<span class="chip">${o.fr}/${o.sl}/${o.pt} · ${o.sn}</span>`).join("");
+  $(p+"chips").innerHTML=r.map(o=>`<span class="chip">PON ${o.fr}/${o.sl}/${o.pt}${pvlan(o)?" → VLAN "+pvlan(o):""} · ${o.sn}</span>`).join("");markHit(r);
   $(p+"err").textContent=(src.trim()&&!r.length)?"Could not find F/S/P and Ont SN in this text.":"";
   if(!r.length)return show("");
   if(mode==="single"&&r.length>1){$(p+"err").textContent="More than one ONT found – using the first. Use the Bulk tab for all.";r=[r[0]]}
   if(mode==="single"){const nm=$("s_desc");if(!nm.value.trim()){nm.classList.add("bad");$("s_err").textContent="Customer name (PPPoE) is required. Enter it to generate the commands.";return show("")}nm.classList.remove("bad")}
   if(mode==="bulk"){const bi=$("b_id");if(!/^\d+$/.test(bi.value.trim())){bi.classList.add("bad");$("b_err").textContent="Starting ONT ID is required. Enter it to generate the commands.";return show("")}bi.classList.remove("bad")}
+  const vlEl=$("vl");
+  if(vlEl.dataset.auto==="1"){vlEl.value="";vlEl.dataset.auto="0";vlEl.classList.remove("auto")}
+  const noV=r.filter(o=>!pvlan(o)),vv=[...new Set(r.map(pvlan).filter(Boolean))];
+  if(noV.length&&!vlEl.value.trim()){vlEl.classList.add("bad");vlEl.placeholder="required";$(p+"err").textContent="Service VLAN is required for port "+[...new Set(noV.map(o=>o.fr+"/"+o.sl+"/"+o.pt))].join(", ")+". Add it to the VLAN list or type it in the Service VLAN box.";return show("")}
+  vlEl.classList.remove("bad");
+  if(!vlEl.value.trim()&&vv.length===1){vlEl.value=vv[0];vlEl.dataset.auto="1";vlEl.classList.add("auto")}
+  vlEl.placeholder=vv.length?"auto: "+vv.join(", "):"auto by PON";
   gen(r,$(p+"desc").value,$(p+"id").value.trim(),mode==="bulk");
 }
 document.querySelectorAll("input,textarea").forEach(e=>e.addEventListener("input",()=>{
